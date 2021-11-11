@@ -1,8 +1,9 @@
 package com.luxoft.list;
 
+import java.util.Iterator;
 import java.util.StringJoiner;
 
-public class LinkedList implements List {
+public class LinkedList implements List, Iterable {
     private int size;
     private Node head;
     private Node tail;
@@ -220,6 +221,11 @@ public class LinkedList implements List {
         return stringJoiner.toString();
     }
 
+    @Override
+    public Iterator iterator() {
+        return new IClass();
+    }
+
     public class Node {
         private Object value;
         private Node next;
@@ -235,6 +241,20 @@ public class LinkedList implements List {
 
         public Object getValue() {
             return value;
+        }
+    }
+
+    public class IClass implements Iterator{
+        int index = 0;
+
+        @Override
+        public boolean hasNext() {
+            return index < size;
+        }
+
+        @Override
+        public Object next() {
+            return get(index++);
         }
     }
 }
