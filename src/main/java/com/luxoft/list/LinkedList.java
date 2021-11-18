@@ -3,70 +3,51 @@ package com.luxoft.list;
 import java.util.Iterator;
 import java.util.StringJoiner;
 
-public class LinkedList implements List, Iterable {
+public class LinkedList<T> implements List<T>, Iterable {
     private int size;
-    private Node head;
-    private Node tail;
+    private Node<T> head;
+    private Node<T> tail;
 
-    public void add(Object value) {
-        Node newNode = new Node(value);
+
+    public void add(T value) {
+        this.add(value, size);
+    }
+
+    public void add(T value, int index) {
+        Node<T> newNode = new Node<T>(value);
+
+        if (index > size) {
+            throw new IllegalStateException("Index is larger than size of the list");
+        }
 
         if (size == 0) {
-            head = newNode;
-            head.next = newNode;
+            head = tail = newNode;
+        } else if (index == 0) {
             head.prev = newNode;
+            newNode.next = head;
+            head = newNode;
+        } else if (index == size) {
+            newNode.prev = tail;
+            newNode.next = head;
+            tail.next = newNode;
             tail = newNode;
         } else {
-            tail.next = newNode;
-            newNode.prev = tail;
-            newNode.next = head;
-            tail = newNode;
-        }
-
-        size++;
-    }
-
-    public void add(Object value, int index) {
-        Node newNode = new Node(value);
-        Node current = head;
-
-        if (index >= size) {
-            throw new IllegalStateException("Index is larger than size of the list");
-        }if(index == 0){
-            head.prev = newNode;
-            newNode.next = head;
-            newNode.prev = tail;
-            head = newNode;
-
-        }else if(index == size -1){
-                newNode.prev = tail.prev;
-                newNode.next = tail;
-                tail.prev.next = newNode;
-                tail.prev = newNode;
-        }else {
-
-            int count = 0;
-            while (count != index) {
-                current = current.next;
-                count++;
-            }
-
-            newNode.next = current;
-            newNode.prev = current.prev;
-            current.prev.next = newNode;
-
+            Node<T> prev = getNode(index - 1);
+            newNode.prev = prev;
+            newNode.next = prev.next;
+            prev.next = newNode;
         }
         size++;
     }
 
-    public Object remove(int index) {
-        if (index >= size) {
+    public T remove(int index) {
+        if (index > size) {
             throw new IllegalStateException("Index is larger than size of the list");
         }
-        Node remove = null;
-        Node current = head;
+        Node<T> remove = null;
+        Node<T> current = head;
 
-        if (index == size - 1) {
+        if (index == size) {
             remove = tail;
             tail.prev.next = head;
             head.prev = tail.prev;
@@ -92,12 +73,12 @@ public class LinkedList implements List, Iterable {
         return remove.value;
     }
 
-    public Object get(int index) {
-        if (index >= size) {
+    public T get(int index) {
+        if (index > size) {
             throw new IllegalStateException("Index is larger than size of the list");
         }
-        Node get = null;
-        Node current = head;
+        Node<T> get = null;
+        Node<T> current = head;
 
         int count = 0;
         while (count != index) {
@@ -110,54 +91,32 @@ public class LinkedList implements List, Iterable {
         return get.value;
     }
 
-    public Object set(Object value, int index) {
-        Node setNode = new Node(value);
-        Node current = head;
-        Node object = null;
-
-        if (index >= size) {
+    public T set(T value, int index) {
+        if (index > size) {
             throw new IllegalStateException("Index is larger than size of the list");
         }
-        if (index == size - 1) {
-            object = tail;
-            setNode.next = head;
-            setNode.prev = tail.prev;
-            tail.prev.next = setNode;
-            head.prev = setNode;
-            tail = setNode;
-        } else if (index == 0) {
-            object = head;
-            setNode.next = head.next;
-            setNode.prev = tail;
-            tail.next = setNode;
-            head.prev = setNode;
-            head = setNode;
 
-        } else {
+        Node<T> newNode = getNode(index);
+        T valueReturn = newNode.value;
+        newNode.value = value;
+        return valueReturn;
+    }
 
-            int count = 0;
-            while (count != index) {
-                current = current.next;
-                count++;
-            }
-            object = current;
-            setNode.next = current.next;
-            setNode.prev = current.prev;
-            current.prev.next = setNode;
-            current.next.prev = setNode;
+    public Node<T> getNode(int index){
+        Node<T> node = head;
+
+        int count = 0;
+
+        while(count != index){
+            node = node.next;
+            count++;
         }
-        return object.value;
+        return node;
     }
 
     public void clear() {
         size = 0;
-
-        head.prev = null;
-        head.next = null;
         head = null;
-
-        tail.prev = null;
-        tail.next = null;
         tail = null;
     }
 
@@ -169,21 +128,12 @@ public class LinkedList implements List, Iterable {
         return size == 0;
     }
 
-    public boolean contains(Object value) {
-        Node current = head;
-        int count = 0;
-        while (count != size) {
-            if (current.value.equals(value)) {
-                return true;
-            }
-            current = current.next;
-            count++;
-        }
-        return false;
+    public boolean contains(T value) {
+        return indexOf(value) >= 0;
     }
 
-    public int indexOf(Object value) {
-        Node current = head;
+    public int indexOf(T value) {
+        Node<T> current = head;
         int count = 0;
         while (count != size) {
             if (current.value.equals(value)) {
@@ -195,8 +145,8 @@ public class LinkedList implements List, Iterable {
         return -1;
     }
 
-    public int lastIndexOf(Object value) {
-        Node current = tail;
+    public int lastIndexOf(T value) {
+        Node<T> current = tail;
         int count = size - 1;
         while (count != 0) {
             if (current.value.equals(value)) {
@@ -211,7 +161,7 @@ public class LinkedList implements List, Iterable {
     @Override
     public String toString() {
         StringJoiner stringJoiner = new StringJoiner(", ", "[", "]");
-        Node current = head;
+        Node<T> current = head;
         int count = 0;
         while (count != size) {
             stringJoiner.add(current.value.toString());
@@ -222,29 +172,21 @@ public class LinkedList implements List, Iterable {
     }
 
     @Override
-    public Iterator iterator() {
+    public Iterator<T> iterator() {
         return new IClass();
     }
 
-    public class Node {
-        private Object value;
-        private Node next;
-        private Node prev;
+    private static class Node<T> {
+        private T value;
+        private Node<T> next;
+        private Node<T> prev;
 
-        public Node(Object value) {
+        public Node(T value) {
             this.value = value;
-        }
-
-        public void setValue(Object value) {
-            this.value = value;
-        }
-
-        public Object getValue() {
-            return value;
         }
     }
 
-    public class IClass implements Iterator{
+    public class IClass implements Iterator<T> {
         int index = 0;
 
         @Override
@@ -253,7 +195,7 @@ public class LinkedList implements List, Iterable {
         }
 
         @Override
-        public Object next() {
+        public T next() {
             return get(index++);
         }
     }
